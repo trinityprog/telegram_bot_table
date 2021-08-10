@@ -23,7 +23,7 @@ class WinnerFactory extends Factory
     {
         return [
             'phone' => $this->faker->phoneNumber(),
-            'prize' => $this->faker->word(),
+            'city' => $this->faker->city(),
             'created_at' => now()->subDays(rand(1, 100)),
         ];
     }

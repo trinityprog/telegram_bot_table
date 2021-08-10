@@ -7,32 +7,29 @@ use BotMan\Drivers\Telegram\Extensions\KeyboardButton;
 
 class InlineKeyboardPaginator
 {
-    public $keyboard_array;
+    public $keyboard_array = [];
 
     public $first_page_label = '« {}';
     public $previous_page_label = '‹ {}';
     public $next_page_label = '{} ›';
     public $last_page_label = '{} »';
-    public $current_page_label = '·{}·';
+    public $current_page_label = '-{}-';
 
-    public function build($paginator)
+    public function build($paginator, $pageName = '{}')
     {
-        $keyboard_array = [];
-
-        if ($paginator->lastPage() == 1) return $this->keyboard;
+        if ($paginator->lastPage() == 1) return $this->keyboard_array;
 
         else if ($paginator->lastPage() <= 5) {
             foreach (range(1, $paginator->lastPage() + 1) as $page)
-                $keyboard_array[$page] = $page;
+                $this->keyboard_array[$page] = $page;
         }
 
-        else
-            $keyboard_array = $this->build_for_multi_pages($paginator);
+        else $this->keyboard_array = $this->build_for_multi_pages($paginator);
 
-        $keyboard_array[$paginator->currentPage()] = strtr($this->current_page_label, ['{}' => $paginator->currentPage()]);
+        $this->keyboard_array[$paginator->currentPage()] = strtr($this->current_page_label, ['{}' => $paginator->currentPage()]);
 
 
-        return $this->keyboard_to_array($keyboard_array);
+        return $this->keyboard_to_array($this->keyboard_array, $pageName);
     }
 
     public function build_for_multi_pages($paginator)
@@ -49,49 +46,40 @@ class InlineKeyboardPaginator
 
     public function build_start_keyboard($paginator)
     {
-        $keyboard_array = [];
-
         foreach (range(1, 4) as $page)
-            $keyboard_array[$page] = $page;
+            $this->keyboard_array[$page] = $page;
 
-        $keyboard_array[4] = strtr($this->next_page_label,["{}" => 4]);
-        $keyboard_array[$paginator->lastPage()] = strtr($this->last_page_label, '{}', $paginator->lastPage());
+        $this->keyboard_array[4] = strtr($this->next_page_label,["{}" => 4]);
+        $this->keyboard_array[$paginator->lastPage()] = strtr($this->last_page_label, '{}', $paginator->lastPage());
 
-        return $keyboard_array;
+        return $this->keyboard_array;
     }
 
     public function build_finish_keyboard($paginator)
     {
-        $keyboard_array = [];
+        $this->keyboard_array[1] = strtr($this->first_page_label, ['{}' => 1]);
+        $this->keyboard_array[$paginator->lastPage() - 3] = strtr($this->previous_page_label, ['{}' => $paginator->lastPage() - 3]);
 
-        $keyboard_array[1] = strtr($this->first_page_label, ['{}' => 1]);
-        $keyboard_array[$paginator->lastPage() - 3] = strtr($this->previous_page_label, ['{}' => $paginator->lastPage() - 3]);
+        foreach (range($paginator->lastPage() - 2, $paginator->lastPage()) as $page)
+            $this->keyboard_array[$page] = $page;
 
-        foreach (range($paginator->lastPage() - 2, $paginator->lastPage() + 1) as $page)
-            $keyboard_array[$page] = $page;
-
-        return $keyboard_array;
+        return $this->keyboard_array;
     }
 
     public function build_middle_keyboard($paginator)
     {
-        $keyboard_array = [];
+        $this->keyboard_array[1] = strtr($this->first_page_label, ['{}' => 1]);
+        $this->keyboard_array[$paginator->currentPage() - 1] = strtr($this->previous_page_label, ['{}' => $paginator->currentPage() - 1]);
+        $this->keyboard_array[$paginator->currentPage()] = $paginator->currentPage();
+        $this->keyboard_array[$paginator->currentPage() + 1] = strtr($this->next_page_label, ['{}' => $paginator->currentPage() + 1]);
+        $this->keyboard_array[$paginator->lastPage()] = strtr($this->last_page_label, ['{}' => $paginator->lastPage()]);
 
-        $keyboard_array[1] = strtr($this->first_page_label, ['{}' => 1]);
-        $keyboard_array[$paginator->currentPage() - 1] = strtr($this->previous_page_label, ['{}' => $paginator->currentPage() - 1]);
-        $keyboard_array[$paginator->currentPage()] = $paginator->currentPage();
-        $keyboard_array[$paginator->currentPage() + 1] = strtr($this->next_page_label, ['{}' => $paginator->currentPage() + 1]);
-        $keyboard_array[$paginator->lastPage()] = strtr($this->last_page_label, ['{}' => $paginator->lastPage()]);
-
-        return $keyboard_array;
+        return $this->keyboard_array;
     }
 
-//    public function keyboard_to_array($keyboard_array)
-//    {
-//        return Keyboard::create()->type(Keyboard::TYPE_INLINE)->addRow(
-//            foreach ($keyboard_array as $key => $label) {
-//                KeyboardButton::create($label)->callbackData($key)
-//            }
-//        )->toArray();
-//    }
+    public function keyboard_to_array($keyboard_array, $pageName)
+    {
+        foreach ($keyboard_array as $key => $label) $buttons[] = KeyboardButton::create($label)->callbackData(strtr($pageName, ['{}' => $key]));
+        return Keyboard::create()->type(Keyboard::TYPE_INLINE)->addRow(...$buttons)->toArray();
+    }
 }

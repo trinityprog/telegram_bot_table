@@ -9,5 +9,5 @@ class Winner extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['phone', 'prize'];
+    protected $fillable = ['phone', 'city'];
 }

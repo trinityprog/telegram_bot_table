@@ -16,9 +16,7 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::get('/', function () {
-    $pagination = Winner::query()->paginate(10, ['*'], '', 40);
-
-    dd((new \App\Bot\InlineKeyboardPaginator)->build($pagination));
+    return '';
 });
 
 Route::get('register_telegram_webhook', function () {
